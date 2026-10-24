@@ -1,60 +1,261 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ur">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Omni Zone Animal Puzzle</title>
 <style>
-body{font-family:Arial,sans-serif;text-align:center;background:#eaffea;margin:0;padding:18px}
-h1{color:#176b35}
-p{font-size:18px}
-#game{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:360px;margin:20px auto}
-.card{height:75px;background:#218c52;color:white;border:0;border-radius:12px;font-size:32px;cursor:pointer}
-.card.open,.card.done{background:white;color:#176b35;border:2px solid #218c52}
-button#again{padding:12px 22px;background:#176b35;color:white;border:0;border-radius:8px;font-size:17px}
+  :root { --tile-size: clamp(38px, 10.8vw, 66px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: #fff;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: radial-gradient(circle at top, #315ca8 0, #15234b 52%, #0b1027 100%);
+    display: flex; justify-content: center; padding: 16px 10px 28px;
+  }
+  .app { width: min(100%, 570px); text-align: center; }
+  header { padding: 7px 0 12px; }
+  h1 { margin: 0; font-size: clamp(25px, 7vw, 38px); line-height: 1.1; text-shadow: 0 3px 0 #16234c, 0 0 18px #6ee7ff; }
+  .subtitle { color: #d5e8ff; margin: 8px 0 0; font-size: 14px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+  .stat { background: #ffffff18; border: 1px solid #ffffff2d; border-radius: 14px; padding: 9px 4px; box-shadow: inset 0 1px 0 #ffffff18; }
+  .stat span { display:block; color:#c6d8ff; font-size:12px; }
+  .stat strong { display:block; font-size:22px; margin-top:2px; }
+  .goal-wrap { background:#ffffff18; border-radius:999px; height:10px; overflow:hidden; margin: 0 2px 14px; }
+  #progress { height:100%; width:0%; background:linear-gradient(90deg,#ffe66d,#ff9e45); transition:width .25s; }
+  .board-frame { background:linear-gradient(145deg,#7dd3fc,#6366f1 48%,#a78bfa); padding:7px; border-radius:20px; box-shadow:0 12px 30px #0005, inset 0 2px 0 #ffffff90; }
+  #board { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:4px; background:#172554; border-radius:14px; padding:5px; touch-action: manipulation; }
+  .tile {
+    aspect-ratio:1; min-width:0; border:0; border-radius:11px; padding:0;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    font-size:clamp(25px, 7.1vw, 43px); line-height:1;
+    background:linear-gradient(145deg,#fff4b8,#ffce68);
+    box-shadow:inset 0 2px 0 #fff9, 0 3px 0 #b66b36;
+    transition:transform .13s, filter .13s, opacity .16s;
+    user-select:none; -webkit-tap-highlight-color:transparent;
+  }
+  .tile:nth-child(4n+1) { background:linear-gradient(145deg,#d8fff3,#7ce8d1); box-shadow:inset 0 2px 0 #fff9,0 3px 0 #239c96; }
+  .tile:nth-child(4n+2) { background:linear-gradient(145deg,#f0e1ff,#c4a4ff); box-shadow:inset 0 2px 0 #fff9,0 3px 0 #7c51bf; }
+  .tile:nth-child(4n+3) { background:linear-gradient(145deg,#ffe1eb,#ff9fc3); box-shadow:inset 0 2px 0 #fff9,0 3px 0 #c04b83; }
+  .tile.selected { outline:3px solid #fff; transform:scale(.91); filter:brightness(1.18); z-index:1; }
+  .tile.matched { animation:pop .42s ease-out forwards; pointer-events:none; }
+  @keyframes pop { 0%{transform:scale(1);opacity:1} 45%{transform:scale(1.3) rotate(10deg);filter:brightness(1.8)} 100%{transform:scale(.05) rotate(-20deg);opacity:0} }
+  .controls { display:flex; gap:9px; margin:14px 0 8px; }
+  button.action { flex:1; border:0; border-radius:13px; padding:12px 8px; color:#172554; font-weight:800; font-size:14px; background:linear-gradient(#fff,#dbeafe); box-shadow:0 4px 0 #7b8db6; cursor:pointer; }
+  button.action:active { transform:translateY(2px); box-shadow:0 2px 0 #7b8db6; }
+  .hint { min-height:24px; margin:10px 0; color:#e2eaff; font-size:14px; }
+  .foot { color:#9fb2dc; font-size:12px; margin-top:13px; }
+  .overlay { position:fixed; inset:0; background:#071026d9; display:none; align-items:center; justify-content:center; padding:22px; z-index:10; }
+  .overlay.show { display:flex; }
+  .modal { width:min(100%,350px); padding:24px 18px; border-radius:22px; background:linear-gradient(145deg,#fff,#dbeafe); color:#172554; box-shadow:0 18px 60px #0008; }
+  .modal h2 { margin:0 0 8px; font-size:29px; }
+  .modal p { margin:0 0 18px; }
+  .modal button { width:100%; border:0; border-radius:12px; padding:13px; font-weight:800; color:white; background:#4f46e5; font-size:16px; }
+  @media (max-width:360px) { #board {gap:3px;padding:4px} .tile{border-radius:8px} .stats{gap:5px} }
 </style>
 </head>
 <body>
-<h1>🐾 Omni Zone 🐾</h1>
-<h2>Animal Puzzle</h2>
-<p>Match the animal pairs!</p>
-<p>Moves: <span id="moves">0</span> | Pairs: <span id="pairs">0</span>/8</p>
-<div id="game"></div>
-<button id="again" onclick="startGame()">Play Again</button>
-<p>Have fun with Omni Zone!</p>
+<main class="app">
+  <header>
+    <h1>🐾 Omni Zone</h1>
+    <div style="font-weight:800;font-size:18px;margin-top:4px">Animal Puzzle</div>
+    <p class="subtitle">تین ایک جیسے جانور ملائیں اور اگلا لیول جیتیں!</p>
+  </header>
+  <section class="stats" aria-label="Game stats">
+    <div class="stat"><span>اسکور</span><strong id="score">0</strong></div>
+    <div class="stat"><span>لیول</span><strong id="level">1</strong></div>
+    <div class="stat"><span>باقی ہدف</span><strong id="goal">12</strong></div>
+  </section>
+  <div class="goal-wrap"><div id="progress"></div></div>
+  <div class="board-frame"><div id="board" aria-label="Animal puzzle board"></div></div>
+  <div class="hint" id="hint" aria-live="polite">دو ساتھ والے جانور بدلیں تاکہ تین ایک جیسے مل جائیں۔</div>
+  <div class="controls">
+    <button class="action" id="soundBtn">🔊 آواز: آن</button>
+    <button class="action" id="restartBtn">↻ دوبارہ کھیلیں</button>
+  </div>
+  <div class="foot">© Omni Zone · جانوروں کو ملائیں، پوائنٹس جیتیں!</div>
+</main>
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">لیول مکمل! 🎉</h2>
+    <p id="modalText">شاباش!</p>
+    <button id="nextBtn">اگلا لیول ▶</button>
+  </div>
+</div>
 <script>
-const animals=["🐶","🐱","🐼","🦊","🐸","🐵","🦁","🐰"];
-let first=null,lock=false,moves=0,pairs=0;
-function startGame(){
- const game=document.getElementById("game");
- game.innerHTML="";
- first=null;lock=false;moves=0;pairs=0;
- document.getElementById("moves").textContent=0;
- document.getElementById("pairs").textContent=0;
- [...animals,...animals].sort(()=>Math.random()-0.5).forEach(animal=>{
-  const card=document.createElement("button");
-  card.className="card";card.textContent="❓";
-  card.onclick=()=>{
-   if(lock||card.classList.contains("open")||card.classList.contains("done"))return;
-   card.textContent=animal;card.classList.add("open");
-   if(!first){first=card;return;}
-   moves++;document.getElementById("moves").textContent=moves;
-   if(first.textContent===card.textContent){
-    first.classList.replace("open","done");
-    card.classList.replace("open","done");
-    first=null;pairs++;
-    document.getElementById("pairs").textContent=pairs;
-    if(pairs===8)setTimeout(()=>alert("Congratulations! You won!"),200);
-   }else{
-    lock=true;const previous=first;first=null;
-    setTimeout(()=>{previous.textContent="❓";card.textContent="❓";previous.classList.remove("open");card.classList.remove("open");lock=false;},700);
-   }
-  };
-  game.appendChild(card);
- });
-}
-startGame();
+(() => {
+  "use strict";
+  const SIZE = 8;
+  const ANIMALS = ["🦁","🐯","🐼","🐸","🐵","🐰","🦊","🐻"];
+  const boardEl = document.getElementById("board");
+  const scoreEl = document.getElementById("score");
+  const levelEl = document.getElementById("level");
+  const goalEl = document.getElementById("goal");
+  const progressEl = document.getElementById("progress");
+  const hintEl = document.getElementById("hint");
+  const overlay = document.getElementById("overlay");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalText = document.getElementById("modalText");
+  const nextBtn = document.getElementById("nextBtn");
+  const soundBtn = document.getElementById("soundBtn");
+  let cells = [], score = 0, level = 1, target = 12, cleared = 0;
+  let selected = null, busy = false, soundOn = true, audioCtx = null;
+
+  function randomAnimal() { return Math.floor(Math.random() * ANIMALS.length); }
+  function startLevel() {
+    cells = Array(SIZE * SIZE).fill(0).map(randomAnimal);
+    // Avoid automatic matches at the beginning.
+    for (let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) {
+      let i=r*SIZE+c;
+      while ((c>=2 && cells[i]===cells[i-1] && cells[i]===cells[i-2]) ||
+             (r>=2 && cells[i]===cells[i-SIZE] && cells[i]===cells[i-2*SIZE])) cells[i]=randomAnimal();
+    }
+    target = 12 + (level-1)*4;
+    cleared = 0; selected = null; busy = false;
+    overlay.classList.remove("show");
+    hintEl.textContent = "دو ساتھ والے جانور بدلیں تاکہ تین ایک جیسے مل جائیں۔";
+    render(); updateStats();
+  }
+  function render() {
+    boardEl.innerHTML = "";
+    cells.forEach((animal, i) => {
+      const b=document.createElement("button");
+      b.type="button"; b.className="tile"; b.dataset.index=i;
+      b.textContent=ANIMALS[animal];
+      b.setAttribute("aria-label", "جانور " + ANIMALS[animal]);
+      if (selected===i) b.classList.add("selected");
+      b.addEventListener("click", () => choose(i));
+      boardEl.appendChild(b);
+    });
+  }
+  function updateStats() {
+    scoreEl.textContent=score; levelEl.textContent=level;
+    goalEl.textContent=Math.max(0,target-cleared);
+    progressEl.style.width=Math.min(100,cleared/target*100)+"%";
+  }
+  function sayOwa() {
+    if (!soundOn) return;
+    try {
+      const Ctx=window.AudioContext||window.webkitAudioContext;
+      if (!Ctx) return;
+      audioCtx ||= new Ctx();
+      if(audioCtx.state==="suspended") audioCtx.resume();
+      // Synthetic robot-like "O-wa!" made with two short, modulated tones.
+      const now=audioCtx.currentTime;
+      [[420,0,0.16],[300,0.17,0.22]].forEach(([freq,delay,duration],n)=>{
+        const osc=audioCtx.createOscillator(), gain=audioCtx.createGain(), filter=audioCtx.createBiquadFilter();
+        osc.type="sawtooth"; osc.frequency.setValueAtTime(freq,now+delay);
+        osc.frequency.exponentialRampToValueAtTime(freq*(n?0.72:1.18),now+delay+duration);
+        filter.type="lowpass"; filter.frequency.value=1200;
+        gain.gain.setValueAtTime(0.0001,now+delay);
+        gain.gain.exponentialRampToValueAtTime(0.18,now+delay+0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001,now+delay+duration);
+        osc.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(now+delay); osc.stop(now+delay+duration+0.02);
+      });
+      // Small arcade pop underneath the voice effect.
+      const osc=audioCtx.createOscillator(), gain=audioCtx.createGain();
+      osc.type="square"; osc.frequency.setValueAtTime(180,now+0.01);
+      osc.frequency.exponentialRampToValueAtTime(55,now+0.15);
+      gain.gain.setValueAtTime(0.10,now+0.01); gain.gain.exponentialRampToValueAtTime(0.0001,now+0.16);
+      osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now+0.01); osc.stop(now+0.18);
+    } catch(e) { /* Audio may be unavailable on some devices. */ }
+  }
+  function findMatches() {
+    const found=new Set();
+    for(let r=0;r<SIZE;r++) {
+      let c=0;
+      while(c<SIZE) {
+        const val=cells[r*SIZE+c]; let end=c+1;
+        while(end<SIZE && cells[r*SIZE+end]===val) end++;
+        if(end-c>=3) for(let x=c;x<end;x++) found.add(r*SIZE+x);
+        c=end;
+      }
+    }
+    for(let c=0;c<SIZE;c++) {
+      let r=0;
+      while(r<SIZE) {
+        const val=cells[r*SIZE+c]; let end=r+1;
+        while(end<SIZE && cells[end*SIZE+c]===val) end++;
+        if(end-r>=3) for(let y=r;y<end;y++) found.add(y*SIZE+c);
+        r=end;
+      }
+    }
+    return [...found];
+  }
+  function adjacent(a,b) {
+    const ar=Math.floor(a/SIZE), ac=a%SIZE, br=Math.floor(b/SIZE), bc=b%SIZE;
+    return Math.abs(ar-br)+Math.abs(ac-bc)===1;
+  }
+  async function choose(i) {
+    if(busy) return;
+    if(selected===null) { selected=i; render(); return; }
+    if(selected===i) { selected=null; render(); return; }
+    if(!adjacent(selected,i)) { selected=i; render(); return; }
+    busy=true;
+    const a=selected; selected=null;
+    [cells[a],cells[i]]=[cells[i],cells[a]];
+    render();
+    await wait(140);
+    let matches=findMatches();
+    if(!matches.length) {
+      [cells[a],cells[i]]=[cells[i],cells[a]];
+      hintEl.textContent="یہ جوڑا نہیں بنا—دوبارہ کوشش کریں!";
+      render(); busy=false; return;
+    }
+    await resolveMatches(matches);
+    busy=false;
+    if(cleared>=target) completeLevel();
+    else if(findMatches().length===0 && cells.every(v=>v===null)) completeLevel();
+  }
+  function wait(ms) { return new Promise(resolve=>setTimeout(resolve,ms)); }
+  async function resolveMatches(matches) {
+    while(matches.length) {
+      sayOwa();
+      const set=new Set(matches);
+      matches.forEach(i=>{
+        const tile=boardEl.children[i]; if(tile) tile.classList.add("matched");
+      });
+      score += matches.length*10;
+      cleared += matches.length;
+      updateStats();
+      hintEl.textContent="اووا! 💥 زبردست میچ!";
+      await wait(260);
+      // Gravity: each column falls downward, then new animals enter from top.
+      for(let c=0;c<SIZE;c++) {
+        const remaining=[];
+        for(let r=SIZE-1;r>=0;r--) {
+          const v=cells[r*SIZE+c];
+          if(!set.has(r*SIZE+c)) remaining.push(v);
+        }
+        while(remaining.length<SIZE) remaining.push(randomAnimal());
+        for(let r=SIZE-1;r>=0;r--) cells[r*SIZE+c]=remaining[SIZE-1-r];
+      }
+      render(); updateStats();
+      await wait(160);
+      matches=findMatches();
+    }
+  }
+  function completeLevel() {
+    busy=true;
+    modalTitle.textContent="لیول "+level+" مکمل! 🎉";
+    modalText.textContent="بہت خوب! آپ کا اسکور "+score+" ہے۔";
+    nextBtn.textContent=level>=10 ? "دوبارہ کھیلیں ↻" : "لیول "+(level+1)+" شروع کریں ▶";
+    overlay.classList.add("show");
+  }
+  nextBtn.addEventListener("click",()=>{
+    if(level>=10) { score=0; level=1; } else level++;
+    startLevel();
+  });
+  document.getElementById("restartBtn").addEventListener("click",()=>{
+    score=0; level=1; startLevel();
+  });
+  soundBtn.addEventListener("click",()=>{
+    soundOn=!soundOn; soundBtn.textContent=soundOn?"🔊 آواز: آن":"🔇 آواز: بند";
+    if(soundOn) sayOwa();
+  });
+  startLevel();
+})();
 </script>
 </body>
 </html>
