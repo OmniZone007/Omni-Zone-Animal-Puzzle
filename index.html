@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Omni Zone Animal Puzzle</title>
+<style>
+body{font-family:Arial,sans-serif;text-align:center;background:#eaffea;margin:0;padding:18px}
+h1{color:#176b35}
+p{font-size:18px}
+#game{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:360px;margin:20px auto}
+.card{height:75px;background:#218c52;color:white;border:0;border-radius:12px;font-size:32px;cursor:pointer}
+.card.open,.card.done{background:white;color:#176b35;border:2px solid #218c52}
+button#again{padding:12px 22px;background:#176b35;color:white;border:0;border-radius:8px;font-size:17px}
+</style>
+</head>
+<body>
+<h1>🐾 Omni Zone 🐾</h1>
+<h2>Animal Puzzle</h2>
+<p>Match the animal pairs!</p>
+<p>Moves: <span id="moves">0</span> | Pairs: <span id="pairs">0</span>/8</p>
+<div id="game"></div>
+<button id="again" onclick="startGame()">Play Again</button>
+<p>Have fun with Omni Zone!</p>
+<script>
+const animals=["🐶","🐱","🐼","🦊","🐸","🐵","🦁","🐰"];
+let first=null,lock=false,moves=0,pairs=0;
+function startGame(){
+ const game=document.getElementById("game");
+ game.innerHTML="";
+ first=null;lock=false;moves=0;pairs=0;
+ document.getElementById("moves").textContent=0;
+ document.getElementById("pairs").textContent=0;
+ [...animals,...animals].sort(()=>Math.random()-0.5).forEach(animal=>{
+  const card=document.createElement("button");
+  card.className="card";card.textContent="❓";
+  card.onclick=()=>{
+   if(lock||card.classList.contains("open")||card.classList.contains("done"))return;
+   card.textContent=animal;card.classList.add("open");
+   if(!first){first=card;return;}
+   moves++;document.getElementById("moves").textContent=moves;
+   if(first.textContent===card.textContent){
+    first.classList.replace("open","done");
+    card.classList.replace("open","done");
+    first=null;pairs++;
+    document.getElementById("pairs").textContent=pairs;
+    if(pairs===8)setTimeout(()=>alert("Congratulations! You won!"),200);
+   }else{
+    lock=true;const previous=first;first=null;
+    setTimeout(()=>{previous.textContent="❓";card.textContent="❓";previous.classList.remove("open");card.classList.remove("open");lock=false;},700);
+   }
+  };
+  game.appendChild(card);
+ });
+}
+startGame();
+</script>
+</body>
+</html>
